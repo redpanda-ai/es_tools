@@ -151,7 +151,7 @@ class ThreadProducer(threading.Thread):
 		", @es_index='" + es_index + "'" + \
 		", @es_type = '" + es_type + "'"
 		#sys.stdout.write(command)
-		cnxn = pyodbc.connect('DSN='+dsn+';UID=jkey_sa;PWD=Mus3Musculus!')
+		cnxn = pyodbc.connect('DSN='+dsn+';UID='+uid+';PWD='+pwd)
 		cursor = cnxn.cursor()
 		cursor.execute(command)
 		self.log(" [" + str(last_id) + ":" + \
@@ -200,7 +200,7 @@ def signal_handler( signal, frame) :
 
 def ensure_group_options_are_ready():
 	command = "SELECT COUNT(0) c FROM LogShipping.dba_tools.item_group_options"
-	cnxn = pyodbc.connect('DSN='+dsn+';UID=jkey_sa;PWD=Mus3Musculus!')
+	cnxn = pyodbc.connect('DSN='+dsn+';UID='+uid+';PWD='+pwd)
 	cursor = cnxn.cursor()
 	cursor.execute(command)
 	row = cursor.fetchone()
@@ -214,14 +214,14 @@ def ensure_group_options_are_ready():
 		" group options found :)")
 
 def confirm_index():
-   #fetch product data in JSON notation from the database
-   command = "EXEC LogShipping.dba_tools.Update_crud_items_rundate " + \
-   "@category_id=" + category_id + ", @flag='I'"
-   print command
-   cnxn = pyodbc.connect('DSN='+dsn+';UID=jkey_sa;PWD=Mus3Musculus!')
-   cursor = cnxn.cursor()
-   cursor.execute(command)
-   cnxn.commit()
+	#fetch product data in JSON notation from the database
+	command = "EXEC LogShipping.dba_tools.Update_crud_items_rundate " + \
+	"@category_id=" + category_id + ", @flag='I'"
+	print command
+	cnxn = pyodbc.connect('DSN='+dsn+';UID='+uid+';PWD='+pwd)
+	cursor = cnxn.cursor()
+	cursor.execute(command)
+	cnxn.commit()
 
 def send_report():
 	uqs = uploaded_queue.qsize()
@@ -233,22 +233,23 @@ def send_report():
 	write_email("Uploaded " + str(total) + " documents", ":)")
 
 #Exit with informative message if there are not exactly 3 parameters
-if len(sys.argv) != 11:
-	print "usage: python " + sys.argv[0] + " <batch_size> <bulk_size> " + \
-	"<consumers> <producers> <dsn> <start_id> <end_id> <db_category> " + \
-	"<es_index> <es_type>"
+if len(sys.argv) != 13:
+	print "usage: python " + sys.argv[0] + " <dsn> <uid> <pwd> <batch_size>" + \
+	" <bulk_size> <consumers> <producers> <start_id> <end_id>" + \
+	" <db_category> <es_index> <es_type>"
 	sys.exit(0)
 
 #assign command line arguments to named variables
 #does not appear to work with types that have spaces
 
-
 signal.signal(signal.SIGINT, signal_handler)
 
-batch_size,bulk_size = int(sys.argv[1]),int(sys.argv[2])
-consumers,producers,dsn = int(sys.argv[3]),int(sys.argv[4]), sys.argv[5]
-start_id,end_id = int(sys.argv[6]),int(sys.argv[7])
-db_category,es_index,es_type = sys.argv[8],sys.argv[9],sys.argv[10]
+dsn,uid,pwd = sys.argv[1], sys.argv[2], sys.argv[3]
+batch_size,bulk_size = int(sys.argv[4]),int(sys.argv[5])
+consumers,producers = int(sys.argv[6]),int(sys.argv[7])
+start_id,end_id = int(sys.argv[8]),int(sys.argv[9])
+db_category,es_index,es_type = sys.argv[10],sys.argv[11],sys.argv[12]
+
 category_id = '3194'
 
 #set variables
